@@ -1,6 +1,7 @@
 using CloudCustomers.API.Controllers;
 using CloudCustomers.API.Models;
 using CloudCustomers.API.Services;
+using CloudCustomers.UnitTests.Fixtures;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -15,14 +16,14 @@ public class TestUsersController
         var mockUsersService = new Mock<IUsersService>();
         mockUsersService
            .Setup(service => service.GetAllUsers())
-           .ReturnsAsync(new List<User>());
+           .ReturnsAsync(UsersFixture.GetTestUsers());
 
         var systemUnderTest = new UsersController(mockUsersService.Object);
 
-   
+
         var result = (OkObjectResult)await systemUnderTest.Get();
 
-      
+
         result.StatusCode.Should().Be(200);
     }
 
@@ -43,4 +44,62 @@ public class TestUsersController
         // Assert
         mockUsersService.Verify(service => service.GetAllUsers(), Times.Once());
     }
+
+
+    [Fact]
+    public async Task Get_OnSuccess_ReturnsListOfUsers()
+    {
+        var mockUsersService = new Mock<IUsersService>();
+        mockUsersService
+            .Setup(service => service.GetAllUsers())
+            .ReturnsAsync(UsersFixture.GetTestUsers());
+
+        var systemUnderTest = new UsersController(mockUsersService.Object);
+
+        var result = await systemUnderTest.Get();
+
+        result.Should().BeOfType<OkObjectResult>();
+        var objectResult = (OkObjectResult)result;
+
+        objectResult.Value.Should().BeOfType<List<User>>();
+    }
+
+    [Fact]
+
+    public async Task Get_OnNoUsersFound_Returns404()
+    {
+        var mockUsersService = new Mock<IUsersService>();
+        mockUsersService
+            .Setup(service => service.GetAllUsers())
+            .ReturnsAsync(new List<User>());
+
+        var systemUnderTest = new UsersController(mockUsersService.Object);
+
+        var result = await systemUnderTest.Get();
+
+        result.Should().BeOfType<NotFoundResult>();
+
+        var objectResult = (NotFoundResult)result;
+
+        objectResult.StatusCode.Should().Be(404);
+    }
+
+    //[Fact]
+    //public async Task Get_OnNoUsersFound_ReturnStatusCode200()
+    //{
+    //    var mockUsersService = new Mock<IUsersService>();
+    //    mockUsersService
+    //       .Setup(service => service.GetAllUsers())
+    //       .ReturnsAsync(new List<User>());
+
+    //    var systemUnderTest = new UsersController(mockUsersService.Object);
+
+
+    //    var result = (OkObjectResult)await systemUnderTest.Get();
+
+
+    //    result.StatusCode.Should().Be(200);
+    //}
+
+
 }
